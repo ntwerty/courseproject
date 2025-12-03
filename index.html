@@ -20,13 +20,19 @@
 </head>
 
 <body>
+    <!-- Кнопка переключения камеры -->
+    <button id="toggleCameraBtn" style="position: absolute; z-index: 10; top: 10px; right: 10px; padding: 8px 12px; font-size: 14px;">
+        Включить селфи-камеру
+    </button>
+
     <a-scene>
         <!-- Ask user for camera permissions, display some text if permission is denied -->
         <a-entity zappar-permissions-ui id="permissions"></a-entity>
         <!-- shows a full-page dialog that informs the user they're using an unsupported browser -->
         <a-entity zappar-compatibility-ui id="compatibility"></a-entity>
 
-        <a-camera zappar-camera="user-facing: true;" />
+        <!-- По умолчанию используем заднюю камеру, можно переключиться на селфи -->
+        <a-camera id="zapparCamera" zappar-camera="user-facing: false;" />
 
         <!-- Setup our face tracker -->
         <a-entity zappar-face id="my-face-tracker">
@@ -39,6 +45,28 @@
 
         </a-entity>
     </a-scene>
+
+    <script>
+        (function () {
+            var btn = document.getElementById('toggleCameraBtn');
+            var cam = document.getElementById('zapparCamera');
+            if (!btn || !cam) return;
+
+            var isUserFacing = false; // сейчас задняя камера
+
+            function updateButtonText() {
+                btn.textContent = isUserFacing ? 'Включить заднюю камеру' : 'Включить селфи-камеру';
+            }
+
+            updateButtonText();
+
+            btn.addEventListener('click', function () {
+                isUserFacing = !isUserFacing;
+                cam.setAttribute('zappar-camera', 'user-facing', isUserFacing);
+                updateButtonText();
+            });
+        })();
+    </script>
 </body>
 
 </html>
