@@ -28,7 +28,11 @@
         Включить заднюю камеру
     </button>
 
-    <a-scene>
+    <a-scene
+        embedded
+        renderer="antialias: true; precision: high; highRefreshRate: true;"
+        vr-mode-ui="enabled: false"
+        style="width: 100vw; height: 100vh;">
         <!-- Ask user for camera permissions, display some text if permission is denied -->
         <a-entity zappar-permissions-ui id="permissions"></a-entity>
         <!-- shows a full-page dialog that informs the user they're using an unsupported browser -->
