@@ -10,7 +10,7 @@
     
 
     <meta charset="utf-8" />
-    <title>Zappar for A-Frame: Face Tracking 3D Model Example</title>
+    <title>AR примерка очков</title>
     <style>
         html,
         body {
@@ -18,6 +18,48 @@
             padding: 0;
             width: 100%;
             height: 100%;
+        }
+
+        #ui-panel {
+            position: absolute;
+            z-index: 15;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            max-width: 90vw;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        #ui-panel button {
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        #ui-panel button.model-btn {
+            background: #ffffff;
+            color: #111827;
+        }
+
+        #ui-panel button.model-btn.active {
+            background: #3b82f6;
+            color: #ffffff;
+        }
+
+        #ui-panel span.label {
+            font-size: 13px;
+            opacity: 0.9;
         }
     </style>
 </head>
@@ -28,53 +70,94 @@
         Включить заднюю камеру
     </button>
 
+    <!-- Панель выбора модели очков -->
+    <div id="ui-panel">
+        <span class="label">Очки:</span>
+        <!-- Задай здесь свои реальные файлы .glb -->
+        <button class="model-btn active" data-model="assets/glasses1.glb">Модель 1</button>
+        <button class="model-btn" data-model="assets/glasses2.glb">Модель 2</button>
+        <button class="model-btn" data-model="assets/glasses3.glb">Модель 3</button>
+    </div>
+
     <a-scene
         embedded
         renderer="antialias: true; precision: high; highRefreshRate: true;"
         vr-mode-ui="enabled: false"
         style="width: 100vw; height: 100vh;">
+        <!-- Предзагрузка моделей очков -->
+        <a-assets>
+            <!-- Здесь укажи реальные glb, которые положишь в assets/ -->
+            <a-asset-item id="glasses1" src="assets/glasses1.glb"></a-asset-item>
+            <a-asset-item id="glasses2" src="assets/glasses2.glb"></a-asset-item>
+            <a-asset-item id="glasses3" src="assets/glasses3.glb"></a-asset-item>
+        </a-assets>
         <!-- Ask user for camera permissions, display some text if permission is denied -->
         <a-entity zappar-permissions-ui id="permissions"></a-entity>
         <!-- shows a full-page dialog that informs the user they're using an unsupported browser -->
         <a-entity zappar-compatibility-ui id="compatibility"></a-entity>
 
-        <!-- Это пример с трекингом лица, поэтому по умолчанию используем селфи-камеру -->
+        <!-- По умолчанию селфи-камера для отслеживания лица -->
         <a-camera id="zapparCamera" zappar-camera="user-facing: true;" />
 
-        <!-- Setup our face tracker -->
+        <!-- Трекер лица -->
         <a-entity zappar-face id="my-face-tracker">
 
-            <!-- Include a head mask object that will make sure the user's head appears in the center of our helmet -->
+            <!-- Маска головы, чтобы голова не «лезла» сквозь 3D -->
             <a-entity zappar-head-mask="face:#my-face-tracker;"></a-entity>
 
-            <!-- Include a 3D model inside our face tracker -->
-            <a-entity gltf-model="url(assets/z_helmet.glb)" position="0.3 -1.3 0" scale="1.1 1.1 1.1"></a-entity>
+            <!-- Очки, привязанные к лицу -->
+            <!-- Положение и масштаб подбери под свои модели (через devtools или подбором чисел) -->
+            <a-entity id="glassesModel"
+                      gltf-model="#glasses1"
+                      position="0 0 0.1"
+                      rotation="0 0 0"
+                      scale="0.8 0.8 0.8">
+            </a-entity>
 
         </a-entity>
     </a-scene>
 
     <script>
         (function () {
+            // Переключение селфи / задней камеры
             var btn = document.getElementById('toggleCameraBtn');
             var cam = document.getElementById('zapparCamera');
-            if (!btn || !cam) return;
+            if (btn && cam) {
+                var isUserFacing = true; // по умолчанию селфи-камера
 
-            // Для отслеживания лица по умолчанию включаем селфи-камеру
-            var isUserFacing = true;
+                function updateButtonText() {
+                    btn.textContent = isUserFacing ? 'Включить заднюю камеру' : 'Включить селфи-камеру';
+                }
 
-            function updateButtonText() {
-                btn.textContent = isUserFacing ? 'Включить заднюю камеру' : 'Включить селфи-камеру';
+                updateButtonText();
+
+                btn.addEventListener('click', function () {
+                    isUserFacing = !isUserFacing;
+                    var attr = 'user-facing: ' + (isUserFacing ? 'true' : 'false') + ';';
+                    cam.setAttribute('zappar-camera', attr);
+                    updateButtonText();
+                });
             }
 
-            updateButtonText();
+            // Переключение моделей очков
+            var glassesEntity = document.getElementById('glassesModel');
+            var modelButtons = document.querySelectorAll('#ui-panel .model-btn');
 
-            btn.addEventListener('click', function () {
-                isUserFacing = !isUserFacing;
-                // Записываем полный строковый атрибут компонента, чтобы A-Frame/Zappar точно его применили
-                var attr = 'user-facing: ' + (isUserFacing ? 'true' : 'false') + ';';
-                cam.setAttribute('zappar-camera', attr);
-                updateButtonText();
-            });
+            if (glassesEntity && modelButtons.length) {
+                modelButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        var url = button.getAttribute('data-model');
+                        if (!url) return;
+
+                        // Снимаем активный класс со всех кнопок
+                        modelButtons.forEach(function (b) { b.classList.remove('active'); });
+                        button.classList.add('active');
+
+                        // Меняем модель очков
+                        glassesEntity.setAttribute('gltf-model', 'url(' + url + ')');
+                    });
+                });
+            }
         })();
     </script>
 </body>
