@@ -6,9 +6,12 @@
     <script src="aframe-extras.min.js"></script>
     <script src ="zappar-aframe/zappar-aframe.js"></script>
     <script src ="zappar-aframe/zappar-aframe.worker.js"></script>
-    
 
     <meta charset="utf-8" />
+    <!-- Мета-теги для корректной работы на телефонах -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>AR примерка очков</title>
     <style>
         html,
@@ -17,6 +20,11 @@
             padding: 0;
             width: 100%;
             height: 100%;
+            overflow: hidden; /* чтобы не было прокрутки при жестах на телефоне */
+            background: #000; /* чёрный фон вокруг видео */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            overscroll-behavior: none;
         }
 
         /* Кнопка открытия выбора очков */
