@@ -4,7 +4,6 @@
 <head>
     <script src="aframe.min.js"></script>
     <script src="aframe-extras.min.js"></script>
-    <script src ="aframe-ar.js"></script>
     <script src ="zappar-aframe/zappar-aframe.js"></script>
     <script src ="zappar-aframe/zappar-aframe.worker.js"></script>
     
@@ -20,26 +19,56 @@
             height: 100%;
         }
 
-        #ui-panel {
+        /* Кнопка открытия выбора очков */
+        #openGlassesPickerBtn {
             position: absolute;
-            z-index: 15;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
+            z-index: 11;
+            top: 10px;
+            left: 10px;
             padding: 8px 12px;
-            border-radius: 8px;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-            max-width: 90vw;
-            overflow-x: auto;
-            white-space: nowrap;
+            font-size: 14px;
         }
 
-        #ui-panel button {
+        /* Модальное окно выбора очков */
+        #glasses-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 20;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #glasses-modal {
+            background: #111827;
+            color: #f9fafb;
+            padding: 16px;
+            border-radius: 10px;
+            max-width: 90vw;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        #glasses-modal h2 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        #glasses-modal p {
+            margin: 0 0 12px;
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        #glasses-modal .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        #glasses-modal button {
             border: none;
             border-radius: 6px;
             padding: 6px 10px;
@@ -47,19 +76,20 @@
             cursor: pointer;
         }
 
-        #ui-panel button.model-btn {
+        #glasses-modal button.model-btn {
             background: #ffffff;
             color: #111827;
         }
 
-        #ui-panel button.model-btn.active {
+        #glasses-modal button.model-btn.active {
             background: #3b82f6;
             color: #ffffff;
         }
 
-        #ui-panel span.label {
-            font-size: 13px;
-            opacity: 0.9;
+        #glasses-modal button.close-btn {
+            background: #4b5563;
+            color: #e5e7eb;
+            width: 100%;
         }
     </style>
 </head>
@@ -70,13 +100,24 @@
         Включить заднюю камеру
     </button>
 
-    <!-- Панель выбора модели очков -->
-    <div id="ui-panel">
-        <span class="label">Очки:</span>
-        <!-- Задай здесь свои реальные файлы .glb -->
-        <button class="model-btn active" data-model="assets/glasses1.glb">Модель 1</button>
-        <button class="model-btn" data-model="assets/glasses2.glb">Модель 2</button>
-        <button class="model-btn" data-model="assets/glasses3.glb">Модель 3</button>
+    <!-- Кнопка открытия модального окна выбора очков -->
+    <button id="openGlassesPickerBtn">
+        Выбрать очки
+    </button>
+
+    <!-- Модальное окно выбора модели очков -->
+    <div id="glasses-modal-overlay">
+        <div id="glasses-modal">
+            <h2>Выбор очков</h2>
+            <p>Нажми на модель, чтобы примерить её. Файлы .glb должны лежать в папке <code>assets</code>.</p>
+            <div class="buttons">
+                <!-- Задай здесь свои реальные файлы .glb -->
+                <button class="model-btn active" data-model="assets/glasses1.glb">Модель 1</button>
+                <button class="model-btn" data-model="assets/glasses2.glb">Модель 2</button>
+                <button class="model-btn" data-model="assets/glasses3.glb">Модель 3</button>
+            </div>
+            <button class="close-btn" id="closeGlassesModalBtn">Закрыть</button>
+        </div>
     </div>
 
     <a-scene
@@ -139,9 +180,13 @@
                 });
             }
 
-            // Переключение моделей очков
+            // Переключение моделей очков через модальное окно
             var glassesEntity = document.getElementById('glassesModel');
-            var modelButtons = document.querySelectorAll('#ui-panel .model-btn');
+            var modelButtons = document.querySelectorAll('#glasses-modal .model-btn');
+
+            var openGlassesBtn = document.getElementById('openGlassesPickerBtn');
+            var closeGlassesBtn = document.getElementById('closeGlassesModalBtn');
+            var overlay = document.getElementById('glasses-modal-overlay');
 
             if (glassesEntity && modelButtons.length) {
                 modelButtons.forEach(function (button) {
@@ -156,6 +201,24 @@
                         // Меняем модель очков
                         glassesEntity.setAttribute('gltf-model', 'url(' + url + ')');
                     });
+                });
+            }
+
+            // Открытие / закрытие модального окна
+            if (overlay && openGlassesBtn && closeGlassesBtn) {
+                openGlassesBtn.addEventListener('click', function () {
+                    overlay.style.display = 'flex';
+                });
+
+                closeGlassesBtn.addEventListener('click', function () {
+                    overlay.style.display = 'none';
+                });
+
+                // Клик по фону закрывает модалку
+                overlay.addEventListener('click', function (e) {
+                    if (e.target === overlay) {
+                        overlay.style.display = 'none';
+                    }
                 });
             }
         })();
